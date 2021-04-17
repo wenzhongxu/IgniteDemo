@@ -1,0 +1,39 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31129.286
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Thin", "Thin", "{6B910028-08F9-4EF1-9043-29E54C96E0E2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "sql", "sql", "{3A85EE36-723B-4AA4-B478-414C74FD89EC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlThin", "SqlThin\SqlThin.csproj", "{4534C9FB-8B81-4BA5-B1C6-FA8B73C273E2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Entities", "Entities\Entities.csproj", "{25C0AE74-E1FB-4B45-A9E7-DDD4D536BEEA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4534C9FB-8B81-4BA5-B1C6-FA8B73C273E2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4534C9FB-8B81-4BA5-B1C6-FA8B73C273E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4534C9FB-8B81-4BA5-B1C6-FA8B73C273E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4534C9FB-8B81-4BA5-B1C6-FA8B73C273E2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{25C0AE74-E1FB-4B45-A9E7-DDD4D536BEEA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{25C0AE74-E1FB-4B45-A9E7-DDD4D536BEEA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{25C0AE74-E1FB-4B45-A9E7-DDD4D536BEEA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{25C0AE74-E1FB-4B45-A9E7-DDD4D536BEEA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{3A85EE36-723B-4AA4-B478-414C74FD89EC} = {6B910028-08F9-4EF1-9043-29E54C96E0E2}
+		{4534C9FB-8B81-4BA5-B1C6-FA8B73C273E2} = {3A85EE36-723B-4AA4-B478-414C74FD89EC}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {96A35CC7-2712-46BF-B6D2-9B732EF3C785}
+	EndGlobalSection
+EndGlobal
