@@ -9,7 +9,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "sql", "sql", "{3A85EE36-723
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlThin", "SqlThin\SqlThin.csproj", "{4534C9FB-8B81-4BA5-B1C6-FA8B73C273E2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Entities", "Entities\Entities.csproj", "{25C0AE74-E1FB-4B45-A9E7-DDD4D536BEEA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Models", "Entities\Models.csproj", "{25C0AE74-E1FB-4B45-A9E7-DDD4D536BEEA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

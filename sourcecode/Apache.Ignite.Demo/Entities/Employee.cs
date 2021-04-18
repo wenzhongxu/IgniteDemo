@@ -1,9 +1,8 @@
 ﻿using Apache.Ignite.Core.Cache.Configuration;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Entities
+namespace Models
 {
     public class Employee
     {
