@@ -1,60 +1,58 @@
 ﻿using Apache.Ignite.Core;
-using Apache.Ignite.Core.Cache.Affinity;
+using Apache.Ignite.Core.Cache;
 using Apache.Ignite.Core.Cache.Configuration;
-using Apache.Ignite.Core.Cache.Query;
 using Apache.Ignite.Core.Client;
 using Apache.Ignite.Core.Client.Cache;
 using Models;
 using System;
+using System.Linq;
+using Apache.Ignite.Linq;
+using Apache.Ignite.Core.Cache.Query;
+using Apache.Ignite.Core.Cache.Affinity;
 
-namespace SqlThin
+namespace LinqThin
 {
     public class Program
     {
+        private const string OrganizationCacheName = "dotnet_linq_organization";
+
+        private const string EmployeeCacheName = "dotnet_linq_employee";
+
+        private const string EmployeeCacheNameColocated = "dotnet_linq_employee_colocated";
+
         //ignite client配置
         private static readonly IgniteClientConfiguration igniteClientConfiguration = new IgniteClientConfiguration
         {
             Endpoints = new[] { "127.0.0.1" }
         };
 
-        private const string EmployeeCacheName = "dotnet_cache_query_employee";
-
-        private const string OrganizationCacheName = "dotnet_cache_query_organization";
-
-        private const string EmployeeCacheNameColocated = "dotnet_cache_query_employee_colocated";
-
         public static void Main(string[] args)
         {
-            //启动一个thin client
             using var ignite = Ignition.StartClient(igniteClientConfiguration);
 
-            //简单sql查询
             var employeeCache = ignite.GetOrCreateCache<int, Employee>(
                 new CacheClientConfiguration(
-                    EmployeeCacheName, 
+                    EmployeeCacheName,
                     new QueryEntity(typeof(int), typeof(Employee))));
             PopulateCache(employeeCache);
-            SqlQueryExample(employeeCache);
+            QueryExample(employeeCache);
+            CompiledQueryExample(employeeCache);
+            FieldsQueryExample(employeeCache);
 
-            //分布式查询
             var organizationCache = ignite.GetOrCreateCache<int, Organization>(
-                    new CacheClientConfiguration(
-                        OrganizationCacheName, 
-                        new QueryEntity(typeof(int), typeof(Organization))));
+                   new CacheClientConfiguration(
+                       OrganizationCacheName,
+                       new QueryEntity(typeof(int), typeof(Organization))));
             PopulateCache(organizationCache);
-            SqlDistributedJoinQueryExample(employeeCache);
+            DistributedJoinQueryExample(employeeCache, organizationCache);
 
-            //关联查询
             var employeeCacheColocated = ignite.GetOrCreateCache<AffinityKey, Employee>(
                     new CacheClientConfiguration(
                         EmployeeCacheNameColocated,
                         new QueryEntity(typeof(AffinityKey), typeof(Employee))));
-            PopulateCache(employeeCacheColocated); 
-            SqlJoinQueryExample(employeeCacheColocated);
-
-            Console.ReadKey();
+            PopulateCache(employeeCacheColocated);
+            JoinQueryExample(employeeCacheColocated, organizationCache);
         }
-
 
         private static void PopulateCache(ICacheClient<int, Employee> cache)
         {
@@ -108,21 +106,6 @@ namespace SqlThin
                 2));
         }
 
-        private static void SqlQueryExample(ICacheClient<int, Employee> cache)
-        {
-            const int zip = 94109;
-
-            var qry = cache.Query(new SqlFieldsQuery("select name, salary from Employee where zip = ?", zip));
-
-            Console.WriteLine();
-            Console.WriteLine(">>> Employees with zipcode {0} (SQL):", zip);
-
-            foreach (var row in qry)
-            {
-                Console.WriteLine(">>>     [Name=" + row[0] + ", salary=" + row[1] + ']');
-            }
-        }
-
         private static void PopulateCache(ICacheClient<int, Organization> cache)
         {
             cache.Put(1, new Organization(
@@ -131,29 +114,11 @@ namespace SqlThin
                 OrganizationType.Private,
                 DateTime.Now));
 
-            cache.Put(2, new Organization("Microsoft",
+            cache.Put(2, new Organization(
+                "Microsoft",
                 new Address("1096 Eddy Street, San Francisco, CA", 94109),
                 OrganizationType.Private,
                 DateTime.Now));
-        }
-
-        private static void SqlDistributedJoinQueryExample(ICacheClient<int, Employee> cache)
-        {
-            const string orgName = "Apache";
-
-            var qry = cache.Query(new SqlFieldsQuery(
-                "select Employee.name from Employee, \"dotnet_cache_query_organization\".Organization " +
-                "where Employee.organizationId = Organization._key and Organization.name = ?", orgName)
-            {
-                EnableDistributedJoins = true,
-                Timeout = new TimeSpan(0, 1, 0)
-            });
-
-            Console.WriteLine();
-            Console.WriteLine(">>> Employees working for " + orgName + " (distributed joins enabled):");
-
-            foreach (var entry in qry)
-                Console.WriteLine(">>>     " + entry[0]);
         }
 
         private static void PopulateCache(ICacheClient<AffinityKey, Employee> cache)
@@ -208,21 +173,107 @@ namespace SqlThin
                 2));
         }
 
-        private static void SqlJoinQueryExample(ICacheClient<AffinityKey, Employee> cache)
+        private static void QueryExample(ICacheClient<int, Employee> cache)
+        {
+            const int zip = 94109;
+
+            IQueryable<ICacheEntry<int, Employee>> qry =
+                cache.AsCacheQueryable().Where(emp => emp.Value.Address.Zip == zip);
+
+            Console.WriteLine();
+            Console.WriteLine($">>> Employees with zipcode {zip}:");
+
+            foreach (ICacheEntry<int, Employee> entry in qry)
+                Console.WriteLine(">>>    " + entry.Value);
+
+            Console.WriteLine($">>> Generated SQL: {qry.ToCacheQueryable().GetFieldsQuery().Sql}");
+        }
+
+        private static void CompiledQueryExample(ICacheClient<int, Employee> cache)
+        {
+            const int zip = 94109;
+
+            var cache0 = cache.AsCacheQueryable();
+
+            // Compile cache query to eliminate LINQ overhead on multiple runs.
+            Func<int, IQueryCursor<ICacheEntry<int, Employee>>> qry =
+                CompiledQuery.Compile((int z) => cache0.Where(emp => emp.Value.Address.Zip == z));
+
+            Console.WriteLine();
+            Console.WriteLine(">>> Employees with zipcode {0} using compiled query:", zip);
+
+            foreach (ICacheEntry<int, Employee> entry in qry(zip))
+                Console.WriteLine(">>>    " + entry.Value);
+        }
+
+        private static void FieldsQueryExample(ICacheClient<int, Employee> cache)
+        {
+            var qry = cache.AsCacheQueryable().Select(entry => new { entry.Value.Name, entry.Value.Salary });
+
+            Console.WriteLine();
+            Console.WriteLine(">>> Employee names and their salaries:");
+
+            foreach (var row in qry)
+                Console.WriteLine($">>>     [Name={row.Name}, salary={row.Salary}{']'}");
+
+            Console.WriteLine($">>> Generated SQL: {qry.ToCacheQueryable().GetFieldsQuery().Sql}");
+        }
+
+        private static void DistributedJoinQueryExample(
+            ICacheClient<int, Employee> employeeCache,
+            ICacheClient<int, Organization> organizationCache)
         {
             const string orgName = "Apache";
 
-            var qry = cache.Query(new SqlFieldsQuery(
-                "select Employee.name from Employee, \"dotnet_cache_query_organization\".Organization " +
-                "where Employee.organizationId = Organization._key and Organization.name = ?", orgName));
+            var queryOptions = new QueryOptions
+            {
+                EnableDistributedJoins = true,
+                Timeout = new TimeSpan(0, 1, 0)
+            };
+
+            IQueryable<ICacheEntry<int, Employee>> employees = employeeCache.AsCacheQueryable(queryOptions);
+            IQueryable<ICacheEntry<int, Organization>> organizations = organizationCache.AsCacheQueryable(queryOptions);
+
+            IQueryable<ICacheEntry<int, Employee>> qry =
+                from employee in employees
+                from organization in organizations
+                where employee.Value.OrganizationId == organization.Key && organization.Value.Name == orgName
+                select employee;
+
 
             Console.WriteLine();
-            Console.WriteLine(">>> Employees working for " + orgName + ":");
+            Console.WriteLine($">>> Employees working for {orgName} using distributed joins:");
 
-            foreach (var entry in qry)
-            {
-                Console.WriteLine(">>>     " + entry[0]);
-            }
+            foreach (ICacheEntry<int, Employee> entry in qry)
+                Console.WriteLine(">>>     " + entry.Value);
+
+            Console.WriteLine($">>> Generated SQL: {qry.ToCacheQueryable().GetFieldsQuery().Sql}");
         }
+
+        private static void JoinQueryExample(
+            ICacheClient<AffinityKey, Employee> employeeCache,
+            ICacheClient<int, Organization> organizationCache)
+        {
+            const string orgName = "Apache";
+
+            IQueryable<ICacheEntry<AffinityKey, Employee>> employees = employeeCache.AsCacheQueryable();
+            IQueryable<ICacheEntry<int, Organization>> organizations = organizationCache.AsCacheQueryable();
+
+            IQueryable<ICacheEntry<AffinityKey, Employee>> qry =
+                from employee in employees
+                from organization in organizations
+                where employee.Value.OrganizationId == organization.Key && organization.Value.Name == orgName
+                select employee;
+
+
+            Console.WriteLine();
+            Console.WriteLine($">>> Employees working for {orgName}:");
+
+            foreach (ICacheEntry<AffinityKey, Employee> entry in qry)
+                Console.WriteLine(">>>     " + entry.Value);
+
+            Console.WriteLine($">>> Generated SQL: {qry.ToCacheQueryable().GetFieldsQuery().Sql}");
+        }
+
     }
 }
