@@ -5,4 +5,13 @@
     <TargetFramework>net5.0</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Apache.Ignite" Version="2.10.0" />
+    <PackageReference Include="Apache.Ignite.Linq" Version="2.10.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Entities\Models.csproj" />
+  </ItemGroup>
+
 </Project>
