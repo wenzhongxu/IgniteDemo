@@ -29,6 +29,8 @@ namespace SqlThin
                 PopulateCache(employeeCache);
 
                 SqlQueryExample(employeeCache);
+
+                Console.ReadKey();
             }
         }
 
