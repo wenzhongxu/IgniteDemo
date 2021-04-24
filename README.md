@@ -1,5 +1,5 @@
 # IgniteDemo
->ignite的学习历程
+>ignite的学习历程  示例代码参考官方给的example
 
 ### 环境准备
 #### 环境要求
@@ -75,6 +75,15 @@ dotnet run
 ```
 ![runpro](docimage/helloworld.png)
 显示启动了一个节点，并输出‘Hello, World’。
+
+
+### .NET项目使用ignite示例
+
+#### 启动服务
+
+如果启动失败，有可能的原因：
+1. 同一主机上已经使用不同的配置文件开启了ignite服务
+2. 如果是使用xml配置文件，配置文件不对
 
 
 
