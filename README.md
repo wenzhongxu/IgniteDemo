@@ -79,7 +79,75 @@ dotnet run
 
 ### .NET项目使用ignite示例
 
-#### 启动服务
+#### 启动服务节点
+
+##### 服务配置
+
+###### xml配置
+app.config
+```xml
+<?xml version="1.0" encoding="utf-8" ?>
+<configuration>
+  <configSections>
+    <section name="igniteConfiguration" type="Apache.Ignite.Core.IgniteConfigurationSection, Apache.Ignite.Core" />
+  </configSections>
+
+  <runtime>
+    <gcServer enabled="true" />
+  </runtime>
+  
+  <igniteConfiguration xmlns="http://ignite.apache.org/schema/dotnet/IgniteConfigurationSection"
+                         localhost="127.0.0.1" peerAssemblyLoadingMode="CurrentAppDomain">
+    <atomicConfiguration atomicSequenceReserveSize="10" />
+
+    <discoverySpi type="TcpDiscoverySpi">
+      <ipFinder type="TcpDiscoveryMulticastIpFinder">
+        <endpoints>
+          <string>127.0.0.1:47500..47502</string>
+        </endpoints>
+      </ipFinder>
+    </discoverySpi>
+  </igniteConfiguration>
+</configuration>
+```
+
+服务启动：
+```C#
+using var ignite = Ignition.StartFromApplicationConfiguration()
+```
+
+###### 自行配置
+```C#
+private static readonly IgniteConfiguration igniteConfiguration = new IgniteConfiguration
+        {
+            Localhost = "127.0.0.1",
+            DiscoverySpi = new TcpDiscoverySpi
+            { 
+                IpFinder = new TcpDiscoveryMulticastIpFinder
+                { 
+                    Endpoints = new[]
+                    {
+                        "127.0.0.1:47500..47502"
+                    }
+                }
+            },
+            JvmOptions = new[]
+            {
+                "-DIGNITE_QUIET=true",
+                "-DIGNITE_PERFORMANCE_SUGGESTIONS_DISABLED=true"
+            },
+            Logger = new ConsoleLogger
+            { 
+                MinLevel = LogLevel.Error
+            },
+            PeerAssemblyLoadingMode = Apache.Ignite.Core.Deployment.PeerAssemblyLoadingMode.CurrentAppDomain
+        };
+```
+
+服务启动：
+```C#
+using var ignite = Ignition.Start(igniteConfiguration)
+```
 
 如果启动失败，有可能的原因：
 1. 同一主机上已经使用不同的配置文件开启了ignite服务
